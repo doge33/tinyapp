@@ -24,7 +24,12 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   let templateVars = {urls: urlDatabase}; //need to send variable INSIDE AN OBJECT to an EJS template!
   res.render("urls_index.ejs", templateVars);
-})
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  let templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase.b2xVn2};
+  res.render("urls_show", templateVars);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
