@@ -98,6 +98,13 @@ app.post("/login", (req, res) => {
 
   res.cookie("username", req.body.username); // the username and its value is in the body of the POST req sent by client. Set it in server's response
   res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+
+  res.clearCookie("username");
+  res.redirect("/urls");
+
 })
 
 
