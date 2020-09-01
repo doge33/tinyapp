@@ -43,7 +43,8 @@ app.get("/urls/new", (req, res) => { //when user try to go here, show them the f
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase.b2xVn2};
+  //console.log(urlDatabase)
+  let templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
@@ -52,11 +53,15 @@ app.post("/urls", (req, res) => {
   const newURL = generateRandomString();
   urlDatabase[newURL] = req.body.longURL;
    
-  console.log(urlDatabase); //log the POST req body to the console (for reference here)
-  res.redirect("/urls");     //after posting, it's better to redirect
+  //console.log(urlDatabase); //log the POST req body to the console (for reference here)
+  res.redirect(`/urls/${newURL}`);     //after posting, it's better to redirect
 
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
