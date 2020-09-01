@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; //default port 8080;
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-Parser")
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -18,6 +19,7 @@ function generateRandomString() {
 //middlewares(process in btween req & resp)
 app.set("view engine", "ejs");  //for GET (so far)l
 app.use(bodyParser.urlencoded({extended:true}));  //for POST (to make data human-readable)
+app.use(cookieParser());
 
 
 // handlers
@@ -34,17 +36,26 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = {urls: urlDatabase}; //need to send variable INSIDE AN OBJECT to an EJS template!
+  let templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"],
+  }; //need to send variable INSIDE AN OBJECT to an EJS template!
   res.render("urls_index.ejs", templateVars);
 });
 
 app.get("/urls/new", (req, res) => { //when user try to go here, show them the form(urls_new)l
-  res.render("urls_new");
+  let templateVars = {
+    username: req.cookies["username"],
+   };
+  res.render("urls_new", templateVars);
 });
 
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = {
+    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"],
+   };
   res.render("urls_show", templateVars);
 });
 
@@ -80,6 +91,13 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id]= req.body.longURL;
   res.redirect("/urls");
   
+});
+
+app.post("/login", (req, res) => {
+  //console.log(`(value of)the username in req.body: ${req.body.username}`);
+
+  res.cookie("username", req.body.username); // the username and its value is in the body of the POST req sent by client. Set it in server's response
+  res.redirect("/urls");
 })
 
 
