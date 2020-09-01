@@ -42,35 +42,48 @@ app.get("/urls/new", (req, res) => { //when user try to go here, show them the f
   res.render("urls_new");
 });
 
+
 app.get("/urls/:shortURL", (req, res) => {
-  //console.log(urlDatabase)
   let templateVars = {shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);  //you need http:// or https://
+});
+
+
 app.post("/urls", (req, res) => {
 
   const newURL = generateRandomString();
-  urlDatabase[newURL] = req.body.longURL;
+  urlDatabase[newURL] = req.body.longURL; // => this, req.body is where you utilize bodyParser!
    
   //console.log(urlDatabase); //log the POST req body to the console (for reference here)
   res.redirect(`/urls/${newURL}`);     //after posting, it's better to redirect
 
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
-});
-
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  console.log(req.params)
+  //console.log(req.params)
   delete urlDatabase[req.params.shortURL]; //shortURL exists in req.params; undefined by itself
   res.redirect("/urls/");
 
 })
 
+app.post("/urls/:id", (req, res) => {
+
+  //console.log("req.params: " + req.params);
+  //console.log("req.body.longURL: " + req.body.longURL);
+  //console.log("urlDatabase[req.params.id]: "+ urlDatabase[req.params.id]);
+  urlDatabase[req.params.id]= req.body.longURL;
+  res.redirect("/urls");
+  
+})
+
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
