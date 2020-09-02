@@ -90,7 +90,10 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login_form");
+  let templateVars = {
+    user: users[req.cookies["user_id"]],
+  };
+  res.render("login_form", templateVars);
 })
 
 //POST req starts HERE
