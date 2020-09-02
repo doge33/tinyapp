@@ -49,14 +49,14 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   let templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"],
+    user_id: req.cookies["user_id"],
   }; //need to send variable INSIDE AN OBJECT to an EJS template!
   res.render("urls_index.ejs", templateVars);
 });
 
 app.get("/urls/new", (req, res) => { //when user try to go here, show them the form(urls_new)l
   let templateVars = {
-    username: req.cookies["username"],
+    user_id: req.cookies["user_id"],
   };
   res.render("urls_new", templateVars);
 });
@@ -64,7 +64,7 @@ app.get("/urls/new", (req, res) => { //when user try to go here, show them the f
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"],
+    user_id: req.cookies["user_id"],
   };
   res.render("urls_show", templateVars);
 });
@@ -76,7 +76,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   let templateVars = {
-    username: req.cookies["username"],
+    user_id: req.cookies["user_id"],
   };
   res.render("register", templateVars)
 })
@@ -108,14 +108,14 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  //console.log(`(value of)the username in req.body: ${req.body.username}`);
-  res.cookie("username", req.body.username); // the username and its value is in the body of the POST req sent by client. Set it in server's response
+  //console.log(`(value of)the user_id in req.body: ${req.body.user_id}`);
+  res.cookie("user_id", req.body.user_id); // the user_id and its value is in the body of the POST req sent by client. Set it in server's response
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
 
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 
 });
@@ -130,6 +130,7 @@ app.post("/register", (req, res) => {
     password: req.body.password,  
   }
   res.cookie("user_id", newUserId);
+  //console.log(users[newUserId]);
   res.redirect("/urls");
 })
 
