@@ -9,24 +9,32 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
-}
+};
 
 //generate 6 random alphanumeric characters
-function generateRandomString() {
+const generateRandomString = () => {
   return Math.random().toString(36).substring(2,8);
+};
+//email lookup in users to make sure users don't register with a pre-existing email
+const emailExists = function(newEmail) {
+  for (let user in users) {
+    if (users[user].email === newEmail) {
+      return true;
+    }
+  }
+};
 
-}
 
 //middlewares(process in btween req & resp)
 app.set("view engine", "ejs");  //for GET (so far)l
@@ -78,8 +86,8 @@ app.get("/register", (req, res) => {
   let templateVars = {
     user: users[req.cookies["user_id"]],
   };
-  res.render("register", templateVars)
-})
+  res.render("register", templateVars);
+});
 
 
 //POST req starts HERE
@@ -89,7 +97,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[newURL] = req.body.longURL; // => this, req.body is where you utilize bodyParser!
    
   //console.log(urlDatabase); //log the POST req body to the console (for reference here)
-  res.redirect(`/urls/${newURL}`);     
+  res.redirect(`/urls/${newURL}`);
 
 });
 
@@ -123,17 +131,33 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
 
-  const user = generateRandomString();
+  if (!req.body.email || !req.body.password) {
+    
+    console.log("users if empty field exists: " + JSON.stringify(users));
+    res.statusCode = 400; // I changed this manually, otherwise it's 200. Is this supposed to be?
+    throw new Error(`Status code: ${res.statusCode} ---> Please don't leave any empty fields.`);
+    
+  } else if (emailExists(req.body.email) === true) {
 
-  users[user] = {
-    id: user,
-    email: req.body.email,
-    password: req.body.password,  
+    console.log("users if email already exists: " + JSON.stringify(users));
+    res.statusCode = 400;
+    throw new Error(`Status code: ${res.statusCode} ---> Email already exists.`);
+
+  } else {
+
+    const user = generateRandomString();
+    users[user] = {
+      id: user,
+      email: req.body.email,
+      password: req.body.password,
+    };
+    console.log("users when register succeed: " + JSON.stringify(users));
+    res.cookie("user_id", user);
+    //console.log(users[user].email);
+    res.redirect("/urls");
   }
-  res.cookie("user_id", user);
-  //console.log(users[user].email);
-  res.redirect("/urls");
-})
+  
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
