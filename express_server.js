@@ -89,6 +89,9 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+app.get("/login", (req, res) => {
+  res.render("login_form");
+})
 
 //POST req starts HERE
 app.post("/urls", (req, res) => {
