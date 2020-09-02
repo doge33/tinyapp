@@ -4,9 +4,16 @@ const PORT = 8080; //default port 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-Parser");
 
+/* previous urlDatabse object
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
+};
+*/
+
+const urlDatabase = {
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 const users = {
@@ -54,7 +61,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World<b><body></html>\n");
 });
 
-app.get("/urls", (req, res) => {
+app.get("/urls", (req, res) => {                                               //URL DATABASE 1
   let templateVars = {
     urls: urlDatabase,
     user: users[req.cookies["user_id"]],
@@ -63,22 +70,30 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => { //when user try to go here, show them the form(urls_new)l
-  let templateVars = {
-    user: users[req.cookies["user_id"]],
-  };
-  res.render("urls_new", templateVars);
+  
+  if (req.cookies["user_id"] === undefined) {
+    res.redirect("/login");
+
+  } else {
+    let templateVars = {
+      user: users[req.cookies["user_id"]],
+    };
+    res.render("urls_new", templateVars);
+  }
+  
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  //console.log(req.params);
   let templateVars = {
-    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL,    //URL DATABASE 2
     user: users[req.cookies["user_id"]],
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;                                //URL DATABASE 3
   res.redirect(longURL);  //you need http:// or https://
 });
 
@@ -100,14 +115,15 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
 
   const newURL = generateRandomString();
-  urlDatabase[newURL] = req.body.longURL; // => this, req.body is where you utilize bodyParser!
+  urlDatabase[newURL] = {longURL: req.body.longURL, userID: req.cookies["user_id"]} // => this, req.body is where you utilize bodyParser!           //URL DATABASE 4
   //console.log(urlDatabase); //log the POST req body to the console (for reference here)
   res.redirect(`/urls/${newURL}`);
 
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL]; //shortURL exists in req.params; undefined by itself
+  delete urlDatabase[req.params.shortURL]; //shortURL exists in req.params; undefined by itself           //URL DATABASE 5
+  console.log(urlDatabase);
   res.redirect("/urls/");
 
 });
@@ -116,7 +132,7 @@ app.post("/urls/:id", (req, res) => {
   //console.log("req.params: " + req.params);
   //console.log("req.body.longURL: " + req.body.longURL);
   //console.log("urlDatabase[req.params.id]: "+ urlDatabase[req.params.id]);
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id].longURL = req.body.longURL;                                      //URL DATABASE 6
   res.redirect("/urls");
 });
 
