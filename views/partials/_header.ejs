@@ -12,15 +12,15 @@
     </div>
     
     <div>
-      <%if (!user_id) { %>
+      <%if (!user) { %>
         <form class="form-inline" method="POST" action="/login">
-          <input class="form-control mr-sm-2" type="text" name="user_id" placeholder="username" style="margin: 1em">
+          <input class="form-control mr-sm-2" type="text" name="user" placeholder="username" style="margin: 1em">
           <button class="btn btn-outline-primary" type="submit">Login</button>
         </form>
       <% } else{ %>
         <form class="form-inline" method="POST" action="/logout">
           <div id="navbarText">
-            <h6 class="navbar-text">Logged In As: <%= user_id %></h6>
+            <h6 class="navbar-text">Logged In As <%= user.email %></h6>
             <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Logout</button>
           </div>
         </form>
