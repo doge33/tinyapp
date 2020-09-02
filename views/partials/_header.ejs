@@ -11,10 +11,10 @@
       </div>
     </div>
 
-    <div>
+    <div class="btn-toolbar">
       <%if (!user) { %>
         <form class="form-inline" method="GET" action="/register">
-          <button class="btn btn-outline-primary" type="submit">Register</button>
+          <button class="btn btn-outline-primary" type="submit" style="margin-right:15px">Register</button>
         </form>
         <form class="form-inline" method="GET" action="/login">
           <button class="btn btn-outline-primary" type="submit">Login</button>
@@ -23,7 +23,7 @@
       <% } else{ %>
         <form class="form-inline" method="POST" action="/logout">
           <div id="navbarText">
-            <h6 class="navbar-text">Logged In As <%= user.email %></h6>
+            <h6 class="navbar-text" style="padding-right:15px">Logged In As: <%= user.email %>!</h6>
             <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Logout</button>
           </div>
         </form>

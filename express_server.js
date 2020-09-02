@@ -27,10 +27,10 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(2,8);
 };
 //email lookup in users to make sure users don't register with a pre-existing email
-const emailExists = function(newEmail) {
+const emailExistsUser = function(newEmail) {
   for (let user in users) {
     if (users[user].email === newEmail) {
-      return true;
+      return user;
     }
   }
 };
@@ -94,14 +94,13 @@ app.get("/login", (req, res) => {
     user: users[req.cookies["user_id"]],
   };
   res.render("login_form", templateVars);
-})
+});
 
 //POST req starts HERE
 app.post("/urls", (req, res) => {
 
   const newURL = generateRandomString();
   urlDatabase[newURL] = req.body.longURL; // => this, req.body is where you utilize bodyParser!
-   
   //console.log(urlDatabase); //log the POST req body to the console (for reference here)
   res.redirect(`/urls/${newURL}`);
 
@@ -123,9 +122,25 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   //console.log(`(value of)the user_id in req.body: ${req.body.user_id}`);
-  
-  res.cookie("user_id", req.body.user_id); // the user_id and its value is in the body of the POST req sent by client. Set it in server's response
-  res.redirect("/urls");
+  //console.log(req.body); //show email and password the user logs-in with;
+  const loginUser = emailExistsUser(req.body.email);
+
+  if (loginUser === undefined) { //when user that matches the email account doesn't exist
+    res.statusCode = 403; // I changed this manually, otherwise it's 200. Is this supposed to be?
+    throw new Error(`Status code: ${res.statusCode} ---> Account doesn't exist.`);
+
+  } else if (loginUser) {
+    //console.log(loginUser);
+    if (users[loginUser].password !== req.body.password) {
+      res.statusCode = 403;
+      throw new Error(`Status code: ${res.statusCode} ---> Your password didn't match! Try Again.`);
+
+    } else {
+      res.cookie("user_id", loginUser); // the user_id and its value is in the body of the POST req sent by client. Set it in server's response
+      res.redirect("/urls");
+      
+    }
+  }
 });
 
 app.post("/logout", (req, res) => {
@@ -138,28 +153,24 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
 
   if (!req.body.email || !req.body.password) {
-    
-    console.log("users if empty field exists: " + JSON.stringify(users));
+    //console.log("users if empty field exists: " + JSON.stringify(users));
     res.statusCode = 400; // I changed this manually, otherwise it's 200. Is this supposed to be?
     throw new Error(`Status code: ${res.statusCode} ---> Please don't leave any empty fields.`);
     
-  } else if (emailExists(req.body.email) === true) {
-
-    console.log("users if email already exists: " + JSON.stringify(users));
+  } else if (emailExistsUser(req.body.email)) { //when user matching the email account already exists
+    //console.log("users if email already exists: " + JSON.stringify(users));
     res.statusCode = 400;
     throw new Error(`Status code: ${res.statusCode} ---> Email already exists.`);
 
   } else {
-
     const user = generateRandomString();
     users[user] = {
       id: user,
       email: req.body.email,
       password: req.body.password,
     };
-    console.log("users when register succeed: " + JSON.stringify(users));
+    //console.log("users when register succeed: " + JSON.stringify(users));
     res.cookie("user_id", user);
-    //console.log(users[user].email);
     res.redirect("/urls");
   }
   
