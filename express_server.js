@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; //default port 8080;
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-Parser")
+const cookieParser = require("cookie-Parser");
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -46,16 +46,15 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => { //when user try to go here, show them the form(urls_new)l
   let templateVars = {
     username: req.cookies["username"],
-   };
+  };
   res.render("urls_new", templateVars);
 });
-
 
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
     username: req.cookies["username"],
-   };
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -64,6 +63,12 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);  //you need http:// or https://
 });
 
+app.get("/register", (req, res) => {
+  let templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("register", templateVars)
+})
 
 app.post("/urls", (req, res) => {
 
@@ -81,14 +86,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL]; //shortURL exists in req.params; undefined by itself
   res.redirect("/urls/");
 
-})
+});
 
 app.post("/urls/:id", (req, res) => {
 
   //console.log("req.params: " + req.params);
   //console.log("req.body.longURL: " + req.body.longURL);
   //console.log("urlDatabase[req.params.id]: "+ urlDatabase[req.params.id]);
-  urlDatabase[req.params.id]= req.body.longURL;
+  urlDatabase[req.params.id] = req.body.longURL;
   res.redirect("/urls");
   
 });
@@ -105,7 +110,7 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
 
-})
+});
 
 
 app.listen(PORT, () => {
