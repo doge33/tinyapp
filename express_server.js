@@ -34,13 +34,26 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(2,8);
 };
 //email lookup in users to make sure users don't register with a pre-existing email
-const emailExistsUser = function(newEmail) {
+const emailExistsUser = (newEmail) => {
   for (let user in users) {
     if (users[user].email === newEmail) {
       return user;
     }
   }
 };
+//compare the curent logged-in user's id to userID for each shortURL in the urlDatabase
+const urlsForUser = (id) => {
+
+  let userURLs ={};
+
+  for (let shortURL in urlDatabase) {
+    
+    if (urlDatabase[shortURL].userID === id) {
+      userURLs[shortURL] = {longURL: urlDatabase[shortURL].longURL, userID: id};
+    }
+  }
+  return userURLs;
+}
 
 
 //middlewares(process in btween req & resp)
@@ -61,13 +74,29 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World<b><body></html>\n");
 });
 
-app.get("/urls", (req, res) => {                                               //URL DATABASE 1
+app.get("/urls", (req, res) => {
+
   let templateVars = {
     urls: urlDatabase,
     user: users[req.cookies["user_id"]],
-  }; //need to send variable INSIDE AN OBJECT to an EJS template!
+  }; 
+
+  if (req.cookies["user_id"] === undefined) {
+    res.render("prompt_login", templateVars );
+    return;
+
+  } else if (urlsForUser(req.cookies["user_id"]) === {}) {
+    //console.log("urls undefined");
+    templateVars.urls = null;
+
+  } else {
+      templateVars.urls = urlsForUser(req.cookies["user_id"]);
+      //console.log(urlDatabase);
+  }
   res.render("urls_index.ejs", templateVars);
 });
+
+
 
 app.get("/urls/new", (req, res) => { //when user try to go here, show them the form(urls_new)l
   
@@ -83,17 +112,25 @@ app.get("/urls/new", (req, res) => { //when user try to go here, show them the f
   
 });
 
-app.get("/urls/:shortURL", (req, res) => {
+app.get("/urls/:id", (req, res) => {
   //console.log(req.params);
-  let templateVars = {
-    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL,    //URL DATABASE 2
+  let templateVars = { 
     user: users[req.cookies["user_id"]],
   };
-  res.render("urls_show", templateVars);
+
+  if (req.cookies["user_id"] === undefined) {
+    res.render("prompt_login", templateVars );
+    return;
+
+  } else {
+    templateVars.shortURL = req.params.id;
+    templateVars.longURL = urlDatabase[req.params.id].longURL;
+    res.render("urls_show", templateVars);
+  }
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;                                //URL DATABASE 3
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);  //you need http:// or https://
 });
 
@@ -115,15 +152,18 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
 
   const newURL = generateRandomString();
-  urlDatabase[newURL] = {longURL: req.body.longURL, userID: req.cookies["user_id"]} // => this, req.body is where you utilize bodyParser!           //URL DATABASE 4
+  urlDatabase[newURL] = {longURL: req.body.longURL, userID: req.cookies["user_id"]} // => this, req.body is where you utilize bodyParser!
   //console.log(urlDatabase); //log the POST req body to the console (for reference here)
   res.redirect(`/urls/${newURL}`);
 
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL]; //shortURL exists in req.params; undefined by itself           //URL DATABASE 5
-  console.log(urlDatabase);
+app.post("/urls/:id/delete", (req, res) => {
+
+  if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+  delete urlDatabase[req.params.id]; //shortURL exists in req.params; undefined by itself
+  //console.log(urlDatabase);
+  }
   res.redirect("/urls/");
 
 });
@@ -132,7 +172,10 @@ app.post("/urls/:id", (req, res) => {
   //console.log("req.params: " + req.params);
   //console.log("req.body.longURL: " + req.body.longURL);
   //console.log("urlDatabase[req.params.id]: "+ urlDatabase[req.params.id]);
-  urlDatabase[req.params.id].longURL = req.body.longURL;                                      //URL DATABASE 6
+  if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+    urlDatabase[req.params.id].longURL = req.body.longURL;
+  
+  }                                 
   res.redirect("/urls");
 });
 
