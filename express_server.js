@@ -40,9 +40,9 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(2,8);
 };
 //email lookup in users to make sure users don't register with a pre-existing email
-const emailExistsUser = (newEmail) => {
-  for (let user in users) {
-    if (users[user].email === newEmail) {
+const getUserByEmail = (email, database) => {
+  for (let user in database) {
+    if (users[user].email === email) {
       return user;
     }
   }
@@ -191,7 +191,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   //console.log(`(value of)the user_id in req.body: ${req.body.user_id}`);
   //console.log(req.body); //show email and password the user logs-in with;
-  const loginUser = emailExistsUser(req.body.email);
+  const loginUser = getUserByEmail(req.body.email, users);
 
   if (loginUser === undefined) { //when user that matches the email account doesn't exist
 
@@ -225,7 +225,7 @@ app.post("/register", (req, res) => {
     //console.log("users if empty field exists: " + JSON.stringify(users));
     res.status(400).send("Status code 400: Please don't leave any empty fields.");
     
-  } else if (emailExistsUser(req.body.email)) { //when user matching the email account already exists
+  } else if (getUserByEmail(req.body.email, users)) { //when user matching the email account already exists
     //console.log("users if email already exists: " + JSON.stringify(users));
     res.status(400).send("Status code 400: Email already exists.");
 
