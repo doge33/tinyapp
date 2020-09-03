@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; //default port 8080;
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-Parser");
+const  cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
 
 /* previous urlDatabse object
@@ -65,7 +65,10 @@ const urlsForUser = (id) => {
 //middlewares(process in btween req & resp)
 app.set("view engine", "ejs");  //for GET (so far)l
 app.use(bodyParser.urlencoded({extended:true}));  //for POST (to make data human-readable)
-app.use(cookieParser());
+app.use(cookieSession( {
+  name: "session",
+  keys: ['key1', 'key2'],
+}));
 
 // handlers
 app.get("/", (req, res) => {
@@ -84,19 +87,19 @@ app.get("/urls", (req, res) => {
 
   let templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
   }; 
 
-  if (req.cookies["user_id"] === undefined) {
+  if (req.session.user_id === undefined) {
     res.render("prompt_login", templateVars );
     return;
 
-  } else if (urlsForUser(req.cookies["user_id"]) === {}) {
+  } else if (urlsForUser(req.session.user_id) === {}) {
     //console.log("urls undefined");
     templateVars.urls = null;
 
   } else {
-      templateVars.urls = urlsForUser(req.cookies["user_id"]);
+      templateVars.urls = urlsForUser(req.session.user_id);
       //console.log(urlDatabase);
   }
   res.render("urls_index.ejs", templateVars);
@@ -106,12 +109,12 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => { //when user try to go here, show them the form(urls_new)l
   
-  if (req.cookies["user_id"] === undefined) {
+  if (req.session.user_id === undefined) {
     res.redirect("/login");
 
   } else {
     let templateVars = {
-      user: users[req.cookies["user_id"]],
+      user: users[req.session.user_id],
     };
     res.render("urls_new", templateVars);
   }
@@ -121,10 +124,10 @@ app.get("/urls/new", (req, res) => { //when user try to go here, show them the f
 app.get("/urls/:id", (req, res) => {
   //console.log(req.params);
   let templateVars = { 
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
   };
 
-  if (req.cookies["user_id"] === undefined) {
+  if (req.session.user_id === undefined) {
     res.render("prompt_login", templateVars );
     return;
 
@@ -142,14 +145,14 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/register", (req, res) => {
   let templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
   };
   res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
   let templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
   };
   res.render("login_form", templateVars);
 });
@@ -158,7 +161,7 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
 
   const newURL = generateRandomString();
-  urlDatabase[newURL] = {longURL: req.body.longURL, userID: req.cookies["user_id"]} // => this, req.body is where you utilize bodyParser!
+  urlDatabase[newURL] = {longURL: req.body.longURL, userID: req.session.user_id} // => this, req.body is where you utilize bodyParser!
   //console.log(urlDatabase); //log the POST req body to the console (for reference here)
   res.redirect(`/urls/${newURL}`);
 
@@ -166,7 +169,7 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
 
-  if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+  if (req.session.user_id === urlDatabase[req.params.id].userID) {
   delete urlDatabase[req.params.id]; //shortURL exists in req.params; undefined by itself
   //console.log(urlDatabase);
   }
@@ -178,7 +181,7 @@ app.post("/urls/:id", (req, res) => {
   //console.log("req.params: " + req.params);
   //console.log("req.body.longURL: " + req.body.longURL);
   //console.log("urlDatabase[req.params.id]: "+ urlDatabase[req.params.id]);
-  if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+  if (req.session.user_id === urlDatabase[req.params.id].userID) {
     urlDatabase[req.params.id].longURL = req.body.longURL;
   
   }                                 
@@ -191,19 +194,18 @@ app.post("/login", (req, res) => {
   const loginUser = emailExistsUser(req.body.email);
 
   if (loginUser === undefined) { //when user that matches the email account doesn't exist
-    res.statusCode = 403; // I changed this manually, otherwise it's 200. Is this supposed to be?
-    throw new Error(`Status code: ${res.statusCode} ---> Account doesn't exist.`);
+
+    res.status(403).send("StatusCode 403: User doesn't exist");
 
   } else if (loginUser) {
     const samePassword = bcrypt.compareSync(req.body.password, users[loginUser].password);
 
     if (!samePassword) {
-      console.log(users[loginUser]);
-      res.statusCode = 403;
-      throw new Error(`Status code: ${res.statusCode} ---> Your password didn't match! Try Again.`);
+  
+      res.status(403).send("StatusCode 403: Your password didn't match! Try Again.");
 
     } else {
-      res.cookie("user_id", loginUser); // the user_id and its value is in the body of the POST req sent by client. Set it in server's response
+      req.session.user_id = loginUser; // the user_id and its value is in the body of the POST req sent by client. Set it in server's response
       res.redirect("/urls");
       
     }
@@ -212,7 +214,7 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
 
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 
 });
@@ -221,13 +223,11 @@ app.post("/register", (req, res) => {
 
   if (!req.body.email || !req.body.password) {
     //console.log("users if empty field exists: " + JSON.stringify(users));
-    res.statusCode = 400; // I changed this manually, otherwise it's 200. Is this supposed to be?
-    throw new Error(`Status code: ${res.statusCode} ---> Please don't leave any empty fields.`);
+    res.status(400).send("Status code 400: Please don't leave any empty fields.");
     
   } else if (emailExistsUser(req.body.email)) { //when user matching the email account already exists
     //console.log("users if email already exists: " + JSON.stringify(users));
-    res.statusCode = 400;
-    throw new Error(`Status code: ${res.statusCode} ---> Email already exists.`);
+    res.status(400).send("Status code 400: Email already exists.");
 
   } else {
     const user = generateRandomString();
@@ -237,7 +237,7 @@ app.post("/register", (req, res) => {
       password: hashedPassword(req.body.password),
     };
     //console.log("users when register succeed: " + JSON.stringify(users));
-    res.cookie("user_id", user);
+    req.session.user_id = user;
     res.redirect("/urls");
   }
   
