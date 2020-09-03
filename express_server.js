@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; //default port 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-Parser");
+const bcrypt = require("bcrypt");
 
 /* previous urlDatabse object
 const urlDatabase = {
@@ -16,16 +17,21 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
+//helper for generating hashedPassword
+const hashedPassword = (userPassword) => {
+  return bcrypt.hashSync(userPassword, 10); 
+};
+
 const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: hashedPassword("purple-monkey-dinosaur")
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: hashedPassword("dishwasher-funk")
   }
 };
 
@@ -53,7 +59,7 @@ const urlsForUser = (id) => {
     }
   }
   return userURLs;
-}
+};
 
 
 //middlewares(process in btween req & resp)
@@ -189,8 +195,10 @@ app.post("/login", (req, res) => {
     throw new Error(`Status code: ${res.statusCode} ---> Account doesn't exist.`);
 
   } else if (loginUser) {
-    //console.log(loginUser);
-    if (users[loginUser].password !== req.body.password) {
+    const samePassword = bcrypt.compareSync(req.body.password, users[loginUser].password);
+
+    if (!samePassword) {
+      console.log(users[loginUser]);
       res.statusCode = 403;
       throw new Error(`Status code: ${res.statusCode} ---> Your password didn't match! Try Again.`);
 
@@ -226,7 +234,7 @@ app.post("/register", (req, res) => {
     users[user] = {
       id: user,
       email: req.body.email,
-      password: req.body.password,
+      password: hashedPassword(req.body.password),
     };
     //console.log("users when register succeed: " + JSON.stringify(users));
     res.cookie("user_id", user);
