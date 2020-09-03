@@ -4,6 +4,7 @@ const PORT = 8080; //default port 8080;
 const bodyParser = require("body-parser");
 const  cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
+const getUserByEmail = require("./helpers");
 
 /* previous urlDatabse object
 const urlDatabase = {
@@ -39,14 +40,7 @@ const users = {
 const generateRandomString = () => {
   return Math.random().toString(36).substring(2,8);
 };
-//email lookup in users to make sure users don't register with a pre-existing email
-const getUserByEmail = (email, database) => {
-  for (let user in database) {
-    if (users[user].email === email) {
-      return user;
-    }
-  }
-};
+
 //compare the curent logged-in user's id to userID for each shortURL in the urlDatabase
 const urlsForUser = (id) => {
 
